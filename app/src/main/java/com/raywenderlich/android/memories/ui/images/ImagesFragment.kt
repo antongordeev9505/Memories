@@ -52,6 +52,7 @@ import com.raywenderlich.android.memories.model.result.Success
 import com.raywenderlich.android.memories.networking.BASE_URL
 import com.raywenderlich.android.memories.networking.NetworkStatusChecker
 import com.raywenderlich.android.memories.ui.images.dialog.ImageOptionsDialogFragment
+import com.raywenderlich.android.memories.utils.FileUtils
 import com.raywenderlich.android.memories.utils.gone
 import com.raywenderlich.android.memories.utils.toast
 import com.raywenderlich.android.memories.utils.visible
@@ -127,23 +128,7 @@ class ImagesFragment : Fragment(), ImageOptionsDialogFragment.ImageOptionsListen
         val isDownloaded = info.outputData.getBoolean("is_downloaded", false)
 
         if (!isDownloaded) {
-          //if the file is not downloaded - create new file and download image into that file
-          val file = File(requireContext().externalMediaDirs.first(), imageUrl)
-
-          //create downloadmanager request
-          val request = DownloadManager.Request(Uri.parse("$BASE_URL/files/$imageUrl"))
-            .setTitle("Image download")
-            .setDescription("Downloading")
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
-            //where to download image
-            .setDestinationUri(Uri.fromFile(file))
-            //constraints
-            .setAllowedOverMetered(true)
-            .setAllowedOverRoaming(true)
-
-          //enqueue request
-          val downloadManager = requireContext().getSystemService(DownloadManager::class.java)
-          downloadManager?.enqueue(request)
+          FileUtils.queueImagesForDownload(requireContext(), arrayOf(imageUrl))
         }
       }
     })
