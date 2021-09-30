@@ -46,13 +46,18 @@ import androidx.work.*
 import com.raywenderlich.android.memories.App
 import com.raywenderlich.android.memories.R
 import com.raywenderlich.android.memories.model.Image
+import com.raywenderlich.android.memories.model.result.Success
 import com.raywenderlich.android.memories.networking.NetworkStatusChecker
 import com.raywenderlich.android.memories.ui.images.dialog.ImageOptionsDialogFragment
 import com.raywenderlich.android.memories.utils.gone
 import com.raywenderlich.android.memories.utils.toast
 import com.raywenderlich.android.memories.utils.visible
 import com.raywenderlich.android.memories.worker.DownloadImageWorker
+import com.raywenderlich.android.memories.worker.LocalImageCheckWorker
 import kotlinx.android.synthetic.main.fragment_images.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 /**
  * Fetches and displays notes from the API.
@@ -103,6 +108,11 @@ class ImagesFragment : Fragment(), ImageOptionsDialogFragment.ImageOptionsListen
       .setRequiredNetworkType(NetworkType.NOT_ROAMING)
       .build()
 
+    val imageCheckWorker = OneTimeWorkRequestBuilder<LocalImageCheckWorker>()
+      .setInputData(workDataOf("image_path" to imageUrl))
+      .setConstraints(constraints)
+      .build()
+
     val downloadImageWorker = OneTimeWorkRequestBuilder<DownloadImageWorker>()
             //image - inputdata in worker, we will use it in Worker
       .setInputData(workDataOf("image_path" to imageUrl))
@@ -110,7 +120,9 @@ class ImagesFragment : Fragment(), ImageOptionsDialogFragment.ImageOptionsListen
       .build()
 
     val workManager = WorkManager.getInstance(requireContext())
-    workManager.enqueue(downloadImageWorker)
+    //dont want to save the same image twice
+    workManager.beginWith(imageCheckWorker)
+      .then(downloadImageWorker).enqueue()
 
     workManager.getWorkInfoByIdLiveData(downloadImageWorker.id).observe(this, Observer { info ->
       if (info.state.isFinished) {
@@ -122,19 +134,20 @@ class ImagesFragment : Fragment(), ImageOptionsDialogFragment.ImageOptionsListen
   private fun getAllImages() {
     progress.visible()
 
-    onImageUrlsReceived(listOf(Image("https://cdnimg.rg.ru/img/content/210/83/90/TASS_46189702_d_850.jpg")))
+//    onImageUrlsReceived(listOf(Image("https://cdnimg.rg.ru/img/content/210/83/90/TASS_46189702_d_850.jpg")))
 
-//    networkStatusChecker.performIfConnectedToInternet {
-//      GlobalScope.launch(Dispatchers.Main) {
-//        val result = remoteApi.getImages()
-//
-//        if (result is Success) {
-//          onImageUrlsReceived(result.data)
-//        } else {
-//          onGetImagesFailed()
-//        }
-//      }
-//    }
+    //get the images from server directly
+    networkStatusChecker.performIfConnectedToInternet {
+      GlobalScope.launch(Dispatchers.Main) {
+        val result = remoteApi.getImages()
+
+        if (result is Success) {
+          onImageUrlsReceived(result.data)
+        } else {
+          onGetImagesFailed()
+        }
+      }
+    }
   }
 
   private fun onImageUrlsReceived(data: List<Image>) {
