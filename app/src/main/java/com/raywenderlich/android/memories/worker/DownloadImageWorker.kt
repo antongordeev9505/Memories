@@ -5,6 +5,7 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.raywenderlich.android.memories.networking.BASE_URL
+import com.raywenderlich.android.memories.utils.FileUtils
 import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
@@ -24,35 +25,12 @@ class DownloadImageWorker(context: Context, workerParameters: WorkerParameters) 
             val imageFile = File(applicationContext.externalMediaDirs.first(), parts.last())
             return Result.success(workDataOf("image_path" to  imageFile.absolutePath))
         }
-        //change the way of saving image
-        //source to the server to download the file from server directly
-        val imageUrl = URL("$BASE_URL/files/$imageDownloadPath")
-
-        val connection = imageUrl.openConnection() as HttpURLConnection
-        connection.doInput = true
-        connection.connect()
 
         val imagePath = parts.last()
-        val inputStream = connection.inputStream
         val file = File(applicationContext.externalMediaDirs.first(), imagePath)
 
-        val outputStream = FileOutputStream(file)
-        outputStream.use { output ->
-            //buffer need to slowly read the file
-            val buffer = ByteArray(4 * 1024)
+        FileUtils.downloadImage(file, imageDownloadPath)
 
-            //read bytes from input stream and store it in buffer
-            var byteCount = inputStream.read(buffer)
-
-            while (byteCount > 0) {
-                //Writes bytes from byte array to this file output stream
-                output.write(buffer, 0, byteCount)
-
-                byteCount = inputStream.read(buffer)
-            }
-
-            output.flush()
-        }
         //created object from pairs
         //this will help to load image later as you dont have to guess the image path
         val output = workDataOf("image_path" to file.absolutePath)
