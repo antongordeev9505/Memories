@@ -102,23 +102,17 @@ class SettingsFragment : Fragment() {
 
     syncImages.setOnClickListener {
       networkStatusChecker.performIfConnectedToInternet {
-        GlobalScope.launch(Dispatchers.Main) {
-          val result = remoteApi.getImages()
-
-          if (result is Success) {
-            val images = result.data
-
-            synchronizeImages(images)
-          }
-        }
+        //get images in service
+        synchronizeImages()
       }
     }
 
   }
 
-  private fun synchronizeImages(images: List<Image>) {
+  private fun synchronizeImages() {
     //use service instead of worker
-    SynchronizeImageService.startWork(requireContext(), Intent())
+    val intent = Intent(requireContext(), SynchronizeImageService::class.java)
+    activity?.startService(intent)
   }
 
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

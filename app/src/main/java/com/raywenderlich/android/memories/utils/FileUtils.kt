@@ -118,16 +118,12 @@ object FileUtils {
 
     fun queueImagesForDownload(context: Context, images: Array<String>) {
         if (images.isNotEmpty()) {
-            val downloadManager = context.getSystemService(DownloadManager::class.java)
+            //remove downloadManager to have only one notification
+            images.forEach { imageUrl ->
+                val file =  File(context.externalMediaDirs.first(), imageUrl)
 
-            val requests = images.mapNotNull { imageUrl ->
-                val file = File(context.externalMediaDirs.first(), imageUrl)
-
-                buildDownloadManagerRequest(file, imageUrl)
+                downloadImage(file, imageUrl)
             }
-
-            //preparing request for the manager
-            requests.forEach {request -> downloadManager?.enqueue(request)}
         }
     }
 
