@@ -1,5 +1,6 @@
 package com.raywenderlich.android.memories.service
 
+import android.app.IntentService
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
@@ -8,15 +9,16 @@ import com.raywenderlich.android.memories.utils.FileUtils
 import com.raywenderlich.android.memories.utils.toast
 import java.io.File
 
+const val SERVICE_NAME = "Download image service"
 //declare service in manifest
-class DownloadService : Service() {
-    //we dont need bound service - so we return null
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
+//require name
+class DownloadService : IntentService(SERVICE_NAME) {
+
+    //one-off service dont bound to something
 
     //when we start the service with regular way - get intent with parametres
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    //onHandleIntent - starter point for all IntentServices
+    override fun onHandleIntent(intent: Intent?){
         val imagePath = intent?.getStringExtra("image_path")
 
         if (imagePath != null) {
@@ -26,18 +28,14 @@ class DownloadService : Service() {
             //stop service
             stopSelf()
         }
-
-        //when originating process will be killed - the service will be removed from the starter state
-        return START_NOT_STICKY
     }
 
     private fun downloadImage(imagePath: String) {
-        //service run in main thread, therefore we go to BG to download image
-        Thread(Runnable {
-            val file = File(applicationContext.externalMediaDirs.first(),imagePath)
+        //intent service run in back thread by default
+        val file = File(applicationContext.externalMediaDirs.first(), imagePath)
 
-            FileUtils.downloadImage(file, imagePath)
-        }).start()
+        FileUtils.downloadImage(file, imagePath)
+
     }
 
     override fun onDestroy() {
