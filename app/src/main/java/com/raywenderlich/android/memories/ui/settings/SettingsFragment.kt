@@ -53,6 +53,7 @@ import com.raywenderlich.android.memories.R
 import com.raywenderlich.android.memories.model.Image
 import com.raywenderlich.android.memories.model.result.Success
 import com.raywenderlich.android.memories.networking.NetworkStatusChecker
+import com.raywenderlich.android.memories.service.SynchronizeImageService
 import com.raywenderlich.android.memories.utils.FileUtils
 import com.raywenderlich.android.memories.utils.toast
 import com.raywenderlich.android.memories.worker.ClearLocalStorageWorker
@@ -116,25 +117,8 @@ class SettingsFragment : Fragment() {
   }
 
   private fun synchronizeImages(images: List<Image>) {
-    val clearLocalStorageWorker = OneTimeWorkRequestBuilder<ClearLocalStorageWorker>()
-      .build()
-
-    val synchronizedImagesWorker = OneTimeWorkRequestBuilder<SynchronizedImagesWorker>()
-      .setInputData(workDataOf("images" to images.map { it.imagePath }.toTypedArray()))
-      .build()
-
-    val workManager = WorkManager.getInstance(requireContext())
-
-    workManager.beginWith(clearLocalStorageWorker)
-      .then(synchronizedImagesWorker)
-      .enqueue()
-
-    workManager.getWorkInfoByIdLiveData(synchronizedImagesWorker.id).observe(viewLifecycleOwner, Observer {
-      if (it.state.isFinished) {
-        activity?.toast("Synchronized images")
-      }
-    })
-
+    //use service instead of worker
+    SynchronizeImageService.startWork(requireContext(), Intent())
   }
 
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
