@@ -7,6 +7,8 @@
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  <!-- Fro pre-oreo devices -->
+  <uses-permission android:name="android.permission.WAKE_LOCK" />
 
   <application
     android:name=".App"
@@ -27,7 +29,9 @@
       </intent-filter>
     </activity>
 
-    <service android:name=".service.DownloadService"/>
+    <!-- Fro oreo and above devices -->
+    <service android:name=".service.DownloadService"
+        android:permission="android.permission.BIND_JOB_SERVICE"/>
   </application>
 
 </manifest>

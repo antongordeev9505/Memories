@@ -113,8 +113,9 @@ class ImagesFragment : Fragment(), ImageOptionsDialogFragment.ImageOptionsListen
     //use service instead of workManager
     //target - downloadService
     //triger onStartCommand but service work without stop
-    val intent = Intent(activity, DownloadService::class.java)
-    activity?.startService(intent)
+    val intent = Intent()
+    intent.putExtra("image_path", imageUrl)
+    DownloadService.startWork(requireContext(), intent)
   }
 
   private fun getAllImages() {
