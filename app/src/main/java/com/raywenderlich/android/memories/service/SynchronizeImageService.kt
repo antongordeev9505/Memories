@@ -85,6 +85,13 @@ class SynchronizeImageService: Service() {
                 val imagesArray = result.data.map { it.imagePath }.toTypedArray()
 
                 FileUtils.queueImagesForDownload(applicationContext, imagesArray)
+
+                //stop foreground when its done and send broadcast
+                //once images will downloaded - notif will be removed and serviece will stop being in foreground
+                stopForeground(true)
+                sendBroadcast(Intent().apply {
+                    action = ACTION_IMAGES_SYNCHRONIZED
+                })
             }
         }
     }

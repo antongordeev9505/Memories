@@ -36,10 +36,14 @@ package com.raywenderlich.android.memories.ui.main
 
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.raywenderlich.android.memories.R
+import com.raywenderlich.android.memories.service.ACTION_IMAGES_SYNCHRONIZED
 import com.raywenderlich.android.memories.service.DownloadService
+import com.raywenderlich.android.memories.service.SynchronizeImageReceiver
+import com.raywenderlich.android.memories.utils.toast
 import kotlinx.android.synthetic.main.activity_main.*
 
 
@@ -49,6 +53,13 @@ import kotlinx.android.synthetic.main.activity_main.*
 class MainActivity : AppCompatActivity() {
 
   private val pagerAdapter by lazy { MainPagerAdapter(supportFragmentManager) }
+
+  //variable for receiver
+  private val receiver by lazy {
+    SynchronizeImageReceiver {
+      toast("Images synchronized")
+    }
+  }
 
   companion object {
     fun getIntent(context: Context): Intent {
@@ -66,6 +77,15 @@ class MainActivity : AppCompatActivity() {
     initUi()
   }
 
+  override fun onStart() {
+    super.onStart()
+    //register a receiver
+    //intent filter listen actions
+    registerReceiver(receiver, IntentFilter().apply {
+      addAction(ACTION_IMAGES_SYNCHRONIZED)
+    })
+  }
+
   private fun initUi() {
     tabs.setupWithViewPager(fragmentPager)
     fragmentPager.adapter = pagerAdapter
@@ -75,6 +95,8 @@ class MainActivity : AppCompatActivity() {
     //stop the service
     val intent = Intent(this, DownloadService::class.java)
     stopService(intent)
+
+    unregisterReceiver(receiver)
     super.onStop()
   }
 }
