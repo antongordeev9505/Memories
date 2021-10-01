@@ -35,6 +35,7 @@
 package com.raywenderlich.android.memories.ui.images
 
 import android.app.DownloadManager
+import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Bundle
@@ -51,6 +52,7 @@ import com.raywenderlich.android.memories.model.Image
 import com.raywenderlich.android.memories.model.result.Success
 import com.raywenderlich.android.memories.networking.BASE_URL
 import com.raywenderlich.android.memories.networking.NetworkStatusChecker
+import com.raywenderlich.android.memories.service.DownloadService
 import com.raywenderlich.android.memories.ui.images.dialog.ImageOptionsDialogFragment
 import com.raywenderlich.android.memories.utils.FileUtils
 import com.raywenderlich.android.memories.utils.gone
@@ -107,31 +109,12 @@ class ImagesFragment : Fragment(), ImageOptionsDialogFragment.ImageOptionsListen
   }
 
   override fun onImageDownload(imageUrl: String) {
-    val constraints = Constraints.Builder()
-      .setRequiresBatteryNotLow(true)
-      .setRequiresStorageNotLow(true)
-      .setRequiredNetworkType(NetworkType.NOT_ROAMING)
-      .build()
 
-    val imageCheckWorker = OneTimeWorkRequestBuilder<LocalImageCheckWorker>()
-      .setInputData(workDataOf("image_path" to imageUrl))
-      .setConstraints(constraints)
-      .build()
-
-    //delete worker, cus we will use download manager instead
-    val workManager = WorkManager.getInstance(requireContext())
-    //dont want to save the same image twice
-    workManager.enqueue(imageCheckWorker)
-
-    workManager.getWorkInfoByIdLiveData(imageCheckWorker.id).observe(this, Observer { info ->
-      if (info.state.isFinished) {
-        val isDownloaded = info.outputData.getBoolean("is_downloaded", false)
-
-        if (!isDownloaded) {
-          FileUtils.queueImagesForDownload(requireContext(), arrayOf(imageUrl))
-        }
-      }
-    })
+    //use service instead of workManager
+    //target - downloadService
+    //triger onStartCommand but service work without stop
+    val intent = Intent(activity, DownloadService::class.java)
+    activity?.startService(intent)
   }
 
   private fun getAllImages() {
